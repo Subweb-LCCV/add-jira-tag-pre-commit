@@ -28,3 +28,11 @@ Run tests with:
 ```bash
 uv run --with pytest pytest
 ```
+
+### Install hooks locally
+
+To use this hook during development of this repo:
+
+```bash
+uv run --with pre-commit pre-commit install -t prepare-commit-msg
+```
