@@ -182,3 +182,11 @@ def test_both_formats_keeps_only_title_tag(tmp_path: Path) -> None:
     assert result_msg == "[PROJ-123] Add new feature\n\nDescription\n"
     # Old format tag should be removed.
     assert "PROJ-123\n" not in result_msg.split("\n", 1)[1]
+
+
+def test_fixup_commit_not_modified(tmp_path: Path) -> None:
+    """Fixup commits should not be modified."""
+    input_msg = "fixup! Add new feature\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    assert result_msg == input_msg  # Unchanged.

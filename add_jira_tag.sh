@@ -15,6 +15,14 @@ else
     exit 0
 fi
 
+# Skip fixup/squash commits - they should not be modified.
+title_line=$(head -1 "$commit_msg_filepath")
+if [[ "$title_line" =~ ^(fixup!|squash!) ]]
+then
+    echo Skipping fixup/squash commit...
+    exit 0
+fi
+
 # Check for old format (tag alone on a line) and remove it.
 if grep -qx "$jira_issue" "$commit_msg_filepath"
 then
