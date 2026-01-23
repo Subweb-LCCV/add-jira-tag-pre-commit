@@ -15,19 +15,21 @@ else
     exit 0
 fi
 
-# Skip fixup/squash commits - they should not be modified.
+# Skip fixup/squash/amend commits and merge commits - they should not be modified.
 title_line=$(head -1 "$commit_msg_filepath")
-if [[ "$title_line" =~ ^(fixup!|squash!) ]]
+if [[ "$title_line" =~ ^(fixup!|squash!|amend!|Merge\ ) ]]
 then
-    echo Skipping fixup/squash commit...
+    echo Skipping fixup/squash/amend/merge commit...
     exit 0
 fi
 
-# Check for old format (tag alone on a line) and remove it.
-if grep -qx "$jira_issue" "$commit_msg_filepath"
+# Check for old format (tag alone as last non-blank line) and remove it.
+last_content_line=$(grep -v '^[[:space:]]*$' "$commit_msg_filepath" | tail -1)
+if [[ "$last_content_line" == "$jira_issue" ]]
 then
     echo Removing old format tag...
-    grep -vx "$jira_issue" "$commit_msg_filepath" > "${commit_msg_filepath}.tmp"
+    # Remove the trailing tag line (last occurrence) using tac/sed/tac.
+    tac "$commit_msg_filepath" | sed "0,/^${jira_issue}$/d" | tac > "${commit_msg_filepath}.tmp"
     mv "${commit_msg_filepath}.tmp" "$commit_msg_filepath"
     # Remove trailing blank lines.
     while [[ $(tail -c 1 "$commit_msg_filepath" | wc -l) -gt 0 ]] && \

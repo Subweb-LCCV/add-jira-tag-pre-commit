@@ -190,3 +190,46 @@ def test_fixup_commit_not_modified(tmp_path: Path) -> None:
     stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
     assert code == 0, f"Exit code {code}, stderr: {stderr}"
     assert result_msg == input_msg  # Unchanged.
+
+
+def test_squash_commit_not_modified(tmp_path: Path) -> None:
+    """Squash commits should not be modified."""
+    input_msg = "squash! Add new feature\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    assert result_msg == input_msg  # Unchanged.
+
+
+def test_amend_commit_not_modified(tmp_path: Path) -> None:
+    """Amend commits (git commit --fixup=amend:) should not be modified."""
+    input_msg = "amend! Add new feature\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    assert result_msg == input_msg  # Unchanged.
+
+
+def test_detached_head_skips(tmp_path: Path) -> None:
+    """Detached HEAD (empty branch) causes script to skip."""
+    input_msg = "Add feature\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg, branch_name="")
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    assert result_msg == input_msg  # Unchanged.
+
+
+def test_merge_commit_not_modified(tmp_path: Path) -> None:
+    """Merge commits should not be modified."""
+    input_msg = "Merge branch 'feature' into main\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    assert result_msg == input_msg  # Unchanged.
+
+
+def test_tag_in_body_not_removed(tmp_path: Path) -> None:
+    """Tag mentioned in body (not at end) should not be removed."""
+    input_msg = "Add feature\n\nRelated to PROJ-123 issue.\nPROJ-123\nMore text.\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    # The mid-body mention should remain.
+    assert "PROJ-123\nMore text." in result_msg
+    # Title should have tag added.
+    assert result_msg.startswith("[PROJ-123] Add feature")
