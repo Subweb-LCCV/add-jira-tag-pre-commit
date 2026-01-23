@@ -9,7 +9,7 @@ Add the following to the `.pre-commit-config.yaml` file in you repo.
 
 ``` yaml
 -   repo: https://github.com/ESSS/add-jira-tag-pre-commit
-    rev: v0.1.1
+    rev: v0.2.0
     hooks:
         -   id: add-jira-tag
             name: add-jira-tag
@@ -18,4 +18,13 @@ Add the following to the `.pre-commit-config.yaml` file in you repo.
 
 Then, install `pre-commit` hooks (usually `pre-commit install`). 
 
-> :warning: **`add-jira-tag` is a `prepare-commit-msg` hook**, so passing additional arguments `--install-hooks -t prepare-commit-msg` may be required during hooks installation. 
+> :warning: **`add-jira-tag` is a `prepare-commit-msg` hook**, so passing additional arguments `--install-hooks -t prepare-commit-msg` may be required during hooks installation.
+
+---
+## Development
+
+Run tests with:
+
+```bash
+uv run --with pytest pytest
+```
