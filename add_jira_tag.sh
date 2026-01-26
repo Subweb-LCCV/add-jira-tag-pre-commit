@@ -40,11 +40,11 @@ then
     done
 fi
 
-# Check if tag already in title with brackets (new format).
+# Check if any JIRA-style tag already in title (handles rebased commits from other branches).
 title_line=$(head -1 "$commit_msg_filepath")
-if [[ "$title_line" =~ ^\[${jira_issue}\] ]]
+if [[ "$title_line" =~ ^\[[A-Z]+-[0-9]+\] ]]
 then
-    echo Tag \'[$jira_issue]\' already in title. Skipping...
+    echo JIRA tag already in title. Skipping...
     exit 0
 fi
 

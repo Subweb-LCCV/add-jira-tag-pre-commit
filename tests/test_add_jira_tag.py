@@ -233,3 +233,21 @@ def test_tag_in_body_not_removed(tmp_path: Path) -> None:
     assert "PROJ-123\nMore text." in result_msg
     # Title should have tag added.
     assert result_msg.startswith("[PROJ-123] Add feature")
+
+
+def test_different_project_tag_not_modified(tmp_path: Path) -> None:
+    """Commit with different project's tag should not be modified (rebase scenario)."""
+    input_msg = "[OTHER-456] Add feature from other project\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    assert result_msg == input_msg  # Unchanged.
+    assert "already in title" in stdout
+
+
+def test_same_project_different_id_not_modified(tmp_path: Path) -> None:
+    """Commit with same project but different ID should not be modified (rebase scenario)."""
+    input_msg = "[PROJ-456] Add feature from different task\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    assert result_msg == input_msg  # Unchanged.
+    assert "already in title" in stdout
