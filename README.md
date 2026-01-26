@@ -31,8 +31,14 @@ uv run --with pytest pytest
 
 ### Install hooks locally
 
-To use this hook during development of this repo:
+To use this hook during development of this repo, with `pre-commit`:
 
 ```bash
 uv run --with pre-commit pre-commit install -t prepare-commit-msg
+```
+
+or with `prek`:
+
+```bash
+uv run --with prek prek install -t prepare-commit-msg
 ```
