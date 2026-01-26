@@ -97,7 +97,7 @@ def test_old_format_converts_to_new(tmp_path: Path) -> None:
     assert code == 0, f"Exit code {code}, stderr: {stderr}"
     assert result_msg.startswith("[PROJ-123] Add new feature")
     assert "PROJ-123\n" not in result_msg.split("\n", 1)[1]  # Not in body.
-    assert "Removing old format tag" in stdout
+    assert "Converting old format tag" in stdout
 
 
 def test_old_format_with_trailing_blank_lines(tmp_path: Path) -> None:
@@ -251,3 +251,14 @@ def test_same_project_different_id_not_modified(tmp_path: Path) -> None:
     assert code == 0, f"Exit code {code}, stderr: {stderr}"
     assert result_msg == input_msg  # Unchanged.
     assert "already in title" in stdout
+
+
+def test_old_format_different_tag_preserved(tmp_path: Path) -> None:
+    """Old format tag from different issue is preserved, not replaced with branch tag."""
+    input_msg = "Add feature\n\nSome description\n\nOTHER-456\n"
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    assert code == 0, f"Exit code {code}, stderr: {stderr}"
+    # Should use OTHER-456, not PROJ-123 from branch.
+    assert result_msg.startswith("[OTHER-456] Add feature")
+    assert "OTHER-456\n" not in result_msg.split("\n", 1)[1]  # Old tag removed from end.
+    assert "Converting old format tag" in stdout

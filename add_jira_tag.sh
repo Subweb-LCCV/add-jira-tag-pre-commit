@@ -23,13 +23,15 @@ then
     exit 0
 fi
 
-# Check for old format (tag alone as last non-blank line) and remove it.
+# Check for old format (any JIRA tag alone as last non-blank line).
+# Use the old tag instead of branch tag to preserve original association during rebases.
 last_content_line=$(grep -v '^[[:space:]]*$' "$commit_msg_filepath" | tail -1)
-if [[ "$last_content_line" == "$jira_issue" ]]
+if [[ "$last_content_line" =~ ^[A-Z]+-[0-9]+$ ]]
 then
-    echo Removing old format tag...
-    # Remove the trailing tag line (last occurrence) using tac/sed/tac.
-    tac "$commit_msg_filepath" | sed "0,/^${jira_issue}$/d" | tac > "${commit_msg_filepath}.tmp"
+    old_tag=${BASH_REMATCH[0]}
+    echo Converting old format tag \'$old_tag\' to new format...
+    # Remove the trailing tag line using tac/sed/tac.
+    tac "$commit_msg_filepath" | sed "0,/^${old_tag}$/d" | tac > "${commit_msg_filepath}.tmp"
     mv "${commit_msg_filepath}.tmp" "$commit_msg_filepath"
     # Remove trailing blank lines.
     while [[ $(tail -c 1 "$commit_msg_filepath" | wc -l) -gt 0 ]] && \
@@ -38,6 +40,14 @@ then
         head -n -1 "$commit_msg_filepath" > "${commit_msg_filepath}.tmp"
         mv "${commit_msg_filepath}.tmp" "$commit_msg_filepath"
     done
+    # Add the OLD tag (not branch tag) to title, unless title already has a tag.
+    title_line=$(head -1 "$commit_msg_filepath")
+    if [[ ! "$title_line" =~ ^\[[A-Z]+-[0-9]+\] ]]
+    then
+        sed -i "1s/^/[$old_tag] /" "$commit_msg_filepath" 2>/dev/null || \
+            sed -i '' "1s/^/[$old_tag] /" "$commit_msg_filepath"
+    fi
+    exit 0
 fi
 
 # Check if any JIRA-style tag already in title (handles rebased commits from other branches).
