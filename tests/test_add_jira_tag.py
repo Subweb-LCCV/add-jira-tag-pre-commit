@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 SCRIPT_PATH = Path(__file__).parent.parent / "add_jira_tag.sh"
 
@@ -39,7 +41,7 @@ def _get_git_bash() -> str:
     return "bash"  # Fall back to PATH.
 
 
-def _run_hook(tmp_path: Path, commit_msg: str, branch_name: str = "fb-PROJ-123-feature") -> tuple[str, str, str, int]:
+def _run_hook(tmp_path: Path, commit_msg: str, branch_name: str = "task/PROJ-123-feature") -> tuple[str, str, str, int]:
     """
     Run the hook script with a mocked git branch command.
 
@@ -73,27 +75,27 @@ source "{SCRIPT_PATH.as_posix()}"
     result_msg = msg_file.read_text()
     return result.stdout, result.stderr, result_msg, result.returncode
 
-
-def test_fresh_commit_adds_tag_to_title(tmp_path: Path) -> None:
+@pytest.mark.parametrize('branch_name', ['task/PROJ-123-feature', 'feat/PROJ-123-feature', 'fix/PROJ-123-feature'])
+def test_fresh_commit_adds_tag_to_title(tmp_path: Path, branch_name:str) -> None:
     """A fresh commit without any tag gets [TAG] prepended to title."""
-    stdout, stderr, result_msg, code = _run_hook(tmp_path, "Add new feature\n")
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, "Add new feature\n", branch_name=branch_name)
     assert code == 0, f"Exit code {code}, stderr: {stderr}"
     assert result_msg == "[PROJ-123] Add new feature\n"
     assert "Adding tag" in stdout
 
-
-def test_fresh_commit_with_body_adds_tag_to_title(tmp_path: Path) -> None:
+@pytest.mark.parametrize('branch_name', ['task/PROJ-123-feature', 'feat/PROJ-123-feature', 'fix/PROJ-123-feature'])
+def test_fresh_commit_with_body_adds_tag_to_title(tmp_path: Path, branch_name:str) -> None:
     """A fresh commit with body gets [TAG] prepended only to title."""
     input_msg = "Add new feature\n\nThis is the description.\n"
-    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg, branch_name=branch_name)
     assert code == 0, f"Exit code {code}, stderr: {stderr}"
     assert result_msg == "[PROJ-123] Add new feature\n\nThis is the description.\n"
 
-
-def test_old_format_converts_to_new(tmp_path: Path) -> None:
+@pytest.mark.parametrize('branch_name', ['task/PROJ-123-feature', 'feat/PROJ-123-feature', 'fix/PROJ-123-feature'])
+def test_old_format_converts_to_new(tmp_path: Path, branch_name:str) -> None:
     """Old format with tag at end is converted to new format with tag in title."""
     input_msg = "Add new feature\n\nSome description\n\nPROJ-123\n"
-    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg, branch_name=branch_name)
     assert code == 0, f"Exit code {code}, stderr: {stderr}"
     assert result_msg.startswith("[PROJ-123] Add new feature")
     assert "PROJ-123\n" not in result_msg.split("\n", 1)[1]  # Not in body.
@@ -129,7 +131,7 @@ def test_already_has_bracket_tag_with_body_skips(tmp_path: Path) -> None:
 
 def test_amend_with_branch_in_comments_adds_tag(tmp_path: Path) -> None:
     """Amend scenario: branch name in comments doesn't count as having tag."""
-    input_msg = "Add feature\n\n# On branch fb-PROJ-123-feature\n# Changes to be committed:\n"
+    input_msg = "Add feature\n\n# On branch task/PROJ-123-feature\n# Changes to be committed:\n"
     stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg)
     assert code == 0, f"Exit code {code}, stderr: {stderr}"
     assert result_msg.startswith("[PROJ-123] Add feature")
@@ -155,7 +157,7 @@ def test_release_branch_skips(tmp_path: Path) -> None:
 def test_different_jira_project(tmp_path: Path) -> None:
     """Different JIRA project keys work correctly."""
     input_msg = "Add feature\n"
-    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg, branch_name="fb-EDEN-2869-some-feature")
+    stdout, stderr, result_msg, code = _run_hook(tmp_path, input_msg, branch_name="task/EDEN-2869-some-feature")
     assert code == 0, f"Exit code {code}, stderr: {stderr}"
     assert result_msg == "[EDEN-2869] Add feature\n"
 

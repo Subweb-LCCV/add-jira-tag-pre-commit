@@ -6,12 +6,12 @@ commit_msg_filepath=$1
 
 branch_name=$(git branch --show-current)
 
-regex="fb-([A-Z]+-[0-9]+)(-.*)?"
+regex="[task|feat|fix]\/([A-Z]+-[0-9]+)(-.*)?"
 if [[ $branch_name =~ $regex ]]
 then
     jira_issue=${BASH_REMATCH[1]}
 else
-    echo Branch is not in format 'fb-{JIRA_TAG}'. Skipping...
+    echo Branch is not in format '<task|feat|fix>/{JIRA_TAG}'. Skipping...
     exit 0
 fi
 
